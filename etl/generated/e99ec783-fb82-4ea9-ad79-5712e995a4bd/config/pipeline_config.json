@@ -1,0 +1,87 @@
+{
+  "sources": [
+    {
+      "name": "coingecko_markets",
+      "type": "rest_api",
+      "url": "https://api.coingecko.com/api/v3/coins/markets",
+      "method": "GET",
+      "params": {
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": 50,
+        "page": 1,
+        "price_change_percentage": "7d"
+      },
+      "headers": {},
+      "auth_type": "api_key",
+      "auth_env_var": "API_KEY",
+      "response_path": "",
+      "role": "primary",
+      "description": "Top 50 coins market data"
+    },
+    {
+      "name": "coingecko_detail",
+      "type": "rest_api",
+      "url": "https://api.coingecko.com/api/v3/coins/{id}",
+      "method": "GET",
+      "params": {},
+      "headers": {},
+      "auth_type": "api_key",
+      "auth_env_var": "API_KEY",
+      "response_path": "",
+      "role": "enrichment",
+      "description": "Coin details for each coin"
+    },
+    {
+      "name": "exchange_rates",
+      "type": "rest_api",
+      "url": "https://open.er-api.com/v6/latest/USD",
+      "method": "GET",
+      "params": {},
+      "headers": {},
+      "auth_type": "api_key",
+      "auth_env_var": "API_KEY",
+      "response_path": "rates",
+      "role": "cross_join",
+      "description": "Exchange rates for cross-enrichment"
+    }
+  ],
+  "target": {
+    "type": "database",
+    "db_type": "postgresql",
+    "schema": "manual",
+    "table": "crypto_market_snapshot",
+    "auth_env_var": "DB_PASSWORD"
+  },
+  "pipeline_settings": {
+    "execution_timeout": "30s",
+    "max_retries": 3,
+    "retry_delay": "5s"
+  },
+  "retry_policies": {
+    "api_retries": {
+      "max_attempts": 3,
+      "backoff_factor": 2,
+      "status_codes": [429, 500, 502, 503, 504]
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "metrics": {
+      "execution_time": true,
+      "row_count": true,
+      "error_count": true
+    },
+    "alerting": {
+      "enabled": true,
+      "thresholds": {
+        "error_count": 1,
+        "execution_time": "30s"
+      }
+    }
+  },
+  "schedule": {
+    "frequency": "daily",
+    "time": "00:00"
+  }
+}
